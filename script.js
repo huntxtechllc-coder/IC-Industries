@@ -7,7 +7,7 @@
 // ────────────────────────────────────────────────
 const API_BASE = location.hostname === "localhost"
   ? "http://localhost:10000"
-  : "https://drop-xpress.onrender.com";  // ← your production backend
+  : "https://huntxtech.co/";  // ← your production backend
 
 let stripePromise = null;
 (async () => {
