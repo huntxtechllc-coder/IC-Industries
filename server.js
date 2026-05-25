@@ -1,0 +1,185 @@
+// server.js
+// Cleaned-up version: better error handling, consistent logging, secure CORS, no breaking changes
+
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const fs = require("fs");
+const path = require("path");
+
+const app = express();
+const PORT = process.env.PORT || 10000;
+
+const BASE_URL =
+  process.env.BASE_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "https://huntx.co"
+    : "http://localhost:3000");
+
+const JWT_SECRET = process.env.JWT_SECRET || "huntx-2025-super-12615abc";
+
+// ======================================================
+// DATA STORAGE (users.json – migrate to DB for production)
+// ======================================================
+const DATA_DIR = path.join(__dirname, "data");
+const USERS_FILE = path.join(DATA_DIR, "users.json");
+
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+
+let users = [];
+if (fs.existsSync(USERS_FILE)) {
+  try {
+    users = JSON.parse(fs.readFileSync(USERS_FILE, "utf-8"));
+  } catch (err) {
+    console.error("Error loading users.json:", err);
+    users = [];
+  }
+}
+
+const saveUsers = () => {
+  try {
+    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+  } catch (err) {
+    console.error("Error saving users.json:", err);
+  }
+};
+
+// ======================================================
+// MIDDLEWARE
+// ======================================================
+app.use(cors({ origin: BASE_URL, credentials: true })); // Restricted to your domain
+app.use(express.json());
+
+// Auth middleware
+const authenticate = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    console.error("Token verification failed:", err);
+    res.status(401).json({ error: "Invalid token" });
+  }
+};
+
+// ======================================================
+// ROUTES
+// ======================================================
+
+// Stripe config (publishable key)
+app.get("/api/config", (req, res) => {
+  res.json({ publishableKey: process.env.STRIPE_PUBLISHABLE_KEY });
+});
+
+// User registration
+app.post("/api/register", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password required" });
+  }
+
+  if (users.find(u => u.email === email)) {
+    return res.status(400).json({ error: "Email already registered" });
+  }
+
+  try {
+    const hashed = await bcrypt.hash(password, 10);
+    const user = { email, password: hashed, xp: 0 }; // Added xp for gamification
+    users.push(user);
+    saveUsers();
+
+    const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: "7d" });
+    res.json({ token, user: { email, xp: user.xp } });
+  } catch (err) {
+    console.error("Registration error:", err);
+    res.status(500).json({ error: "Registration failed" });
+  }
+});
+
+// User login
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password required" });
+  }
+
+  const user = users.find(u => u.email === email);
+  if (!user) {
+    return res.status(401).json({ error: "Invalid credentials" });
+  }
+
+  try {
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: "7d" });
+    res.json({ token, user: { email, xp: user.xp || 0 } });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ error: "Login failed" });
+  }
+});
+
+// Create Stripe checkout session (requires auth)
+app.post("/api/create-checkout-session", authenticate, async (req, res) => {
+  const { items } = req.body;
+
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: "Invalid items" });
+  }
+
+  try {
+    const successUrl = `${BASE_URL}/thank-you.html`;
+    const cancelUrl = `${BASE_URL}/cart.html`;
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items: items.map(i => ({
+        price_data: {
+          currency: "usd",
+          product_data: { name: i.name },
+          unit_amount: Math.round(i.price * 100)
+        },
+        quantity: i.quantity
+      })),
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata: { email: req.user.email }
+    });
+
+    res.json({ sessionId: session.id });
+  } catch (err) {
+    console.error("Stripe session error:", err);
+    res.status(500).json({ error: "Checkout failed" });
+  }
+});
+
+// API fallback
+app.use("/api", (_, res) => res.status(404).json({ error: "API route not found" }));
+
+// Static files + SPA fallback
+app.use(express.static("public"));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public/index.html"));
+});
+
+// ======================================================
+// START SERVER
+// ======================================================
+app.listen(PORT, () => {
+  console.log(`HUNTX SERVER RUNNING → ${BASE_URL}`);
+});

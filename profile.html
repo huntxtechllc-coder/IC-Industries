@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Profile | HUNTX</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+  <header>
+    <h1><i class="fa-solid fa-user"></i> Profile</h1>
+    <nav>
+      <a href="index.html">HOME</a>
+      <a href="shop.html">ARMORY</a>
+      <a href="cart.html">LOADOUT</a>
+      <span id="user-info"></span>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div class="glass" style="max-width:800px; margin:4rem auto; padding:3rem; text-align:center;">
+      <h2 style="margin-bottom:2rem; color:#ff6b00;">OPERATIVE PROFILE</h2>
+
+      <div id="profileAvatar" style="width:140px; height:140px; background:#ff6b00; color:#000; border-radius:50%; display:grid; place-items:center; margin:0 auto 1.5rem; font-size:5rem; font-weight:900;">
+        <!-- Filled by JS -->
+      </div>
+
+      <div id="profileData" style="font-size:1.5rem; line-height:1.8; opacity:0.9;">
+        <!-- Filled by JS -->
+      </div>
+
+      <button onclick="logoutUser()" class="btn" style="margin-top:3rem; width:100%; max-width:400px; font-size:1.4rem;">
+        LOGOUT
+      </button>
+    </div>
+  </div>
+
+  <footer>© <span id="copyright-year"></span> HUNTX | Newport, TN</footer>
+
+  <script src="script.js"></script>
+  <script>
+    document.getElementById("copyright-year").textContent = new Date().getFullYear();
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const user = getUser();
+      const avatarEl = document.getElementById("profileAvatar");
+      const dataEl = document.getElementById("profileData");
+
+      if (!user) {
+        dataEl.innerHTML = `<p style="font-size:1.6rem;">Please <a href="login.html" style="color:#ff6b00;">log in</a> to view your profile.</p>`;
+        return;
+      }
+
+      const level = Math.floor((user.xp || 0) / 500) + 1;
+      avatarEl.textContent = user.email.charAt(0).toUpperCase();
+
+      dataEl.innerHTML = `
+        <p style="font-size:2.2rem; margin-bottom:0.5rem;"><strong>${user.email}</strong></p>
+        <p style="font-size:1.8rem; color:#ff6b00; margin-bottom:1.5rem;">Level ${level} Operative</p>
+        <p><strong>XP:</strong> ${user.xp || 0}</p>
+        <p><strong>Status:</strong> Active</p>
+        <p><strong>Member since:</strong> ${new Date().toLocaleDateString()}</p>
+      `;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Community | HUNTX</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="frontier.css">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1963624194864640"
+     crossorigin="anonymous"></script>
+</head>
+<body class="frontier-page">
+  <div class="bg"></div>
+
+  <header>
+    <h1>HUNTX</h1>
+    <nav>
+      <a href="index.html">HOME</a>
+      <a href="shop.html">SYSTEMS</a>
+      <a href="frontier.html">FRONTIER</a>
+      <a class="active">COMMUNITY</a>
+      <a href="cart.html">MISSION KIT</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="glass hero-panel">
+      <h2>THE COMMUNITY</h2>
+      <p class="mission-subtitle">
+        A private network for engineers, operators, and explorers building beyond Earth.
+      </p>
+      <a href="#apply" class="cta">Request Access</a>
+    </section>
+
+    <section class="glass" style="padding:4rem; text-align:center;">
+      <h3>Access Levels</h3>
+      <div class="community-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:2rem; margin-top:2.5rem;">
+        <div class="community-card">
+          <h4>Explorer</h4>
+          <p>Early access, mission updates, and system previews.</p>
+        </div>
+        <div class="community-card">
+          <h4>Engineer</h4>
+          <p>Technical discussions, design collaboration, and research channels.</p>
+        </div>
+        <div class="community-card">
+          <h4>Partner</h4>
+          <p>Direct coordination, private briefings, and mission-level access.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="glass" id="apply">
+      <h3>Request Access</h3>
+      <p class="mission-text">
+        Access is reviewed manually. This is intentional.
+      </p>
+
+      <form class="community-form" id="communityForm">
+        <input type="email" class="input" placeholder="Email address" required>
+        <input type="text" class="input" placeholder="Role / Background" required>
+        <textarea class="input" placeholder="Why do you want to join?" rows="4" required></textarea>
+        <button type="submit" class="btn community-btn">Submit Request</button>
+        <p class="mission-tags">ACCESS IS REVIEWED · LIMITED ENTRY</p>
+      </form>
+    </section>
+  </main>
+
+  <footer>
+    © <span id="year"></span> HUNTX
+  </footer>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    document.getElementById("communityForm")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      alert("Request submitted — our team will review and respond shortly.");
+      e.target.reset();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product | HUNTX</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.ico" sizes="any">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1963624194864640"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+  <header>
+    <h1>HUNTX</h1>
+    <nav>
+      <a href="index.html">HOME</a>
+      <a href="shop.html">ARMORY</a>
+      <a href="cart.html">LOADOUT (<span id="cart-count">0</span>)</a>
+      <span id="user-info"></span>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div id="product-container" class="glass" style="padding:4rem; margin:4rem auto; max-width:1200px;"></div>
+  </div>
+
+  <footer>© <span id="year"></span> HUNTX | Newport, TN</footer>
+
+  <script src="products.js"></script>
+  <script src="script.js"></script>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // Load product from URL param
+    const params = new URLSearchParams(window.location.search);
+    const id = parseInt(params.get("id"));
+    const product = products.find(p => p.id === id);
+
+    const container = document.getElementById("product-container");
+
+    if (!product) {
+      container.innerHTML = `
+        <h2 style="text-align:center; color:#ff6b00;">Product not found</h2>
+        <a href="shop.html" class="btn" style="display:block; margin:2rem auto; width:fit-content;">Back to Armory</a>
+      `;
+    } else {
+      container.innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:3rem; align-items:start;">
+          <!-- Images -->
+          <div>
+            <img src="${product.images?.[0] || 'placeholder.jpg'}" alt="${product.name}" style="width:100%; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.6);">
+            ${product.images?.length > 1 ? `
+              <div style="display:flex; gap:1rem; margin-top:1.5rem; overflow-x:auto;">
+                ${product.images.map(src => `<img src="${src}" alt="${product.name}" style="width:80px; height:80px; object-fit:cover; border-radius:8px; cursor:pointer;">`).join('')}
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Details -->
+          <div>
+            <h1 style="font-size:3.5rem; margin-bottom:1rem; background:linear-gradient(90deg,#ff6b00,#ffb800); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+              ${product.name}
+            </h1>
+            <p style="font-size:1.8rem; color:var(--accent); margin-bottom:1rem;">$${product.price.toLocaleString()}</p>
+            ${product.salePrice ? `<p style="font-size:1.4rem; color:#2d8b3a; margin-bottom:1rem;">Sale: $${product.salePrice.toLocaleString()}</p>` : ''}
+            <p style="font-size:1.4rem; margin-bottom:1.5rem; opacity:0.9;">${product.description || 'No description available.'}</p>
+
+            <div style="display:flex; gap:1rem; margin-bottom:2rem;">
+              <button class="btn" onclick="addToCart(${product.id})" style="flex:1;">ADD TO LOADOUT</button>
+              <button class="btn" onclick="equipItem(products.find(x => x.id === ${product.id}))" style="flex:1; background:#3aa6ff;">EQUIP NOW</button>
+            </div>
+
+            <!-- Reviews -->
+            <h3 style="font-size:2rem; margin:2rem 0 1rem; color:#ff6b00;">Customer Reviews</h3>
+            <div id="reviews" style="max-height:300px; overflow-y:auto; margin-bottom:2rem;"></div>
+
+            <select id="rating" style="padding:0.8rem; border-radius:8px; background:rgba(255,255,255,0.1); color:#fff; border:1px solid var(--border);">
+              <option value="5">★★★★★</option>
+              <option value="4">★★★★☆</option>
+              <option value="3">★★★☆☆</option>
+              <option value="2">★★☆☆☆</option>
+              <option value="1">★☆☆☆☆</option>
+            </select>
+            <textarea id="reviewText" class="input" placeholder="Write your review..." rows="3" style="margin:1rem 0; width:100%;"></textarea>
+            <button class="btn" onclick="submitReview(${product.id})" style="width:100%;">SUBMIT REVIEW</button>
+          </div>
+        </div>
+      `;
+
+      // Load existing reviews (localStorage for demo)
+      loadReviews(product.id);
+    }
+
+    function loadReviews(productId) {
+      const reviews = JSON.parse(localStorage.getItem(`reviews_${productId}`) || "[]");
+      const el = document.getElementById("reviews");
+      if (!el) return;
+
+      if (reviews.length === 0) {
+        el.innerHTML = "<p style='opacity:0.7;'>No reviews yet. Be the first!</p>";
+      } else {
+        el.innerHTML = reviews.map(r => `
+          <div style="border-bottom:1px solid rgba(255,107,0,0.2); padding:1rem 0;">
+            <p style="font-weight:700; margin-bottom:0.3rem;">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</p>
+            <p style="opacity:0.9;">${r.text}</p>
+            <p style="font-size:0.9rem; opacity:0.6; margin-top:0.5rem;">— Anonymous • ${new Date(r.date).toLocaleDateString()}</p>
+          </div>
+        `).join("");
+      }
+    }
+
+    function submitReview(productId) {
+      const rating = document.getElementById("rating")?.value;
+      const text = document.getElementById("reviewText")?.value.trim();
+
+      if (!rating || !text) {
+        alert("Please select a rating and write a review.");
+        return;
+      }
+
+      const review = { rating: parseInt(rating), text, date: new Date().toISOString() };
+      let reviews = JSON.parse(localStorage.getItem(`reviews_${productId}`) || "[]");
+      reviews.push(review);
+      localStorage.setItem(`reviews_${productId}`, JSON.stringify(reviews));
+
+      loadReviews(productId);
+      document.getElementById("reviewText").value = "";
+      alert("Review submitted! Thank you.");
+    }
+  </script>
+</body>
+</html>
+
+</body>
+<footer style="background:rgba(10,10,30,0.9); padding:3rem 5%; text-align:center; border-top:1px solid #ff6b00; margin-top:4rem;">
+  <div class="trust-badges" style="display:flex; justify-content:center; gap:2rem; flex-wrap:wrap; margin-bottom:2rem;">
+    <!-- Replace src with your hosted images or free CDN links -->
+    <img src="https://trustlock.co/wp-content/uploads/2019/01/ssl-secure-checkout-trust-badge-icon.png" alt="SSL Secure" width="140" loading="lazy">
+    <img src="https://tse3.mm.bing.net/th/id/OIP.S8wuoyNOknSddf2ZACZeBAHaB5?pid=Api&P=0&h=220" alt="Powered by Stripe" width="120" loading="lazy">
+    <span style="font-size:1.4rem; color:#ff6b00; align-self:center;">30-Day Returns • Secure Payments</span>
+  </div>
+
+  <p style="font-size:1.3rem; margin:1rem 0;">
+    © 2026 HUNTX | Newport, Tennessee
+  </p>
+
+  <p style="font-size:1.2rem; opacity:0.9;">
+    <a href="privacy.html" style="color:#ff6b00; margin:0 1rem;">Privacy Policy</a> |
+    <a href="terms.html" style="color:#ff6b00; margin:0 1rem;">Terms of Service</a> |
+    <a href="returns.html" style="color:#ff6b00; margin:0 1rem;">Returns & Refunds</a> |
+    <a href="contact.html" style="color:#ff6b00; margin:0 1rem;">Contact Us</a>
+  </p>
+
+  <div style="margin-top:1.5rem;">
+    <a href="https://www.instagram.com/huntx.co" target="_blank" style="color:#ff6b00; font-size:1.8rem; margin:0 1rem;"><i class="fab fa-instagram"></i></a>
+    <a href="https://x.com/huntxgear" target="_blank" style="color:#ff6b00; font-size:1.8rem; margin:0 1rem;"><i class="fab fa-x-twitter"></i></a>
+    <!-- Add YouTube/TikTok if active -->
+  </div>
+
+  <p style="margin-top:2rem; font-size:1.1rem; opacity:0.7;">Elite gear for extreme hunts and frontier missions. Built in the USA.</p>
+</footer>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LOADOUT | HUNTX</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://js.stripe.com/v3/"></script>
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1963624194864640"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+  <video id="bgVideo" autoplay muted loop playsinline>
+    <source src="your-video.mp4" type="video/mp4"> <!-- Replace with real video URL -->
+  </video>
+  <button id="themeToggle"><i class="fa-solid fa-moon"></i></button>
+
+  <header>
+    <h1>HUNTX</h1>
+    <nav>
+      <a href="index.html">HOME</a>
+      <a href="shop.html">ARMORY</a>
+      <a href="cart.html" class="active">LOADOUT (<span id="cart-count">0</span>)</a>
+      <span id="user-info"><a href="login.html">LOGIN</a></span>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div class="glass" style="padding: 4rem 3rem; max-width: 1200px; margin: 0 auto;">
+      <h2 style="font-size: 5rem; text-align: center; margin-bottom: 4rem; background: linear-gradient(45deg, #ff6b00, #ffb800); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+        YOUR LOADOUT
+      </h2>
+
+      <!-- CART ITEMS -->
+      <div id="cart-items" style="display: grid; gap: 2.5rem; margin-bottom: 4rem;"></div>
+
+      <!-- EMPTY STATE -->
+      <div id="empty-cart" style="text-align: center; font-size: 2.2rem; opacity: 0.7; display: none;">
+        <p>Your loadout is empty.</p>
+        <a href="shop.html" class="btn" style="margin-top: 2rem;">EXPLORE ARMORY</a>
+      </div>
+
+      <!-- TOTAL SECTION -->
+      <div class="total-section">
+        <h3>Total: <span id="cart-total">$0.00</span></h3>
+        <button id="checkout-btn" class="btn" style="margin-top: 2rem;">PROCEED TO CHECKOUT</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    © 2025 HUNTX — BUILT FOR APEX PREDATORS | Sourced from Sportsman's Supply Inc. (ssisports.net) wholesale catalog
+  </footer>
+
+  <script src="products.js"></script>
+  <script src="script.js"></script>
+
+  <script>
+    // cart.html specific render logic
+    // ──────────────────────────────────────────────
+    // RENDER CART
+    // ──────────────────────────────────────────────
+    function renderCart() {
+      const cartItemsEl = document.getElementById("cart-items");
+      const totalEl = document.getElementById("cart-total");
+      const emptyEl = document.getElementById("empty-cart");
+
+      if (!cartItemsEl || !totalEl || !emptyEl) return;
+
+      const cart = getCart();
+
+      if (cart.length === 0) {
+        emptyEl.style.display = "block";
+        totalEl.textContent = "$0.00";
+        return;
+      }
+
+      emptyEl.style.display = "none";
+
+      cartItemsEl.innerHTML = cart.map(item => `
+        <div class="cart-item" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 1.5rem;">
+          <img src="${item.images?.[0] || 'placeholder.jpg'}" alt="${item.name}" style="width: clamp(100px, 20vw, 140px); height: auto; border-radius: 16px; object-fit: cover;">
+          <div style="flex: 1;">
+            <h3 style="font-size: 1.8rem; margin-bottom: 0.5rem;">${item.name}</h3>
+            <p style="color: #ff6b00; font-weight: 700;">$${calculateItemPrice(item)} × ${item.quantity}</p>
+          </div>
+          <button class="remove-btn" onclick="removeFromCart(${item.id})" style="background: #e74c3c; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; font-size: 1.4rem; cursor: pointer;">×</button>
+        </div>
+      `).join("");
+
+      const total = cart.reduce((sum, item) => sum + calculateItemPrice(item) * item.quantity, 0);
+      totalEl.textContent = `$${total.toFixed(2)}`;
+    }
+
+    // ──────────────────────────────────────────────
+    // INIT
+    // ──────────────────────────────────────────────
+    document.addEventListener("DOMContentLoaded", () => {
+      renderCart();
+      updateCartCount();
+
+      const checkoutBtn = document.getElementById("checkout-btn");
+      if (checkoutBtn) {
+        checkoutBtn.addEventListener("click", handleCheckout);
+      }
+    });
+  </script>
+</body>
+</html>
