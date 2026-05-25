@@ -1,6 +1,4 @@
 // server.js
-// Cleaned-up version: better error handling, consistent logging, secure CORS, no breaking changes
-
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -22,12 +20,20 @@ const BASE_URL =
 const JWT_SECRET = process.env.JWT_SECRET || "huntx-2025-super-12615abc";
 
 // ======================================================
-// DATA STORAGE (users.json – migrate to DB for production)
+// DATA STORAGE (Fixed for Vercel)
 // ======================================================
-const DATA_DIR = path.join(__dirname, "data");
+
+// Use /tmp on Vercel (writable), fallback for local development
+const DATA_DIR = process.env.NODE_ENV === "production"
+  ? "/tmp/data"
+  : path.join(__dirname, "data");
+
 const USERS_FILE = path.join(DATA_DIR, "users.json");
 
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+// Ensure directory exists
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
 
 let users = [];
 if (fs.existsSync(USERS_FILE)) {
@@ -50,7 +56,11 @@ const saveUsers = () => {
 // ======================================================
 // MIDDLEWARE
 // ======================================================
-app.use(cors({ origin: BASE_URL, credentials: true })); // Restricted to your domain
+app.use(cors({ 
+  origin: BASE_URL, 
+  credentials: true 
+}));
+
 app.use(express.json());
 
 // Auth middleware
@@ -75,7 +85,6 @@ const authenticate = (req, res, next) => {
 // ROUTES
 // ======================================================
 
-// Stripe config (publishable key)
 app.get("/api/config", (req, res) => {
   res.json({ publishableKey: process.env.STRIPE_PUBLISHABLE_KEY });
 });
@@ -94,7 +103,7 @@ app.post("/api/register", async (req, res) => {
 
   try {
     const hashed = await bcrypt.hash(password, 10);
-    const user = { email, password: hashed, xp: 0 }; // Added xp for gamification
+    const user = { email, password: hashed, xp: 0 };
     users.push(user);
     saveUsers();
 
@@ -133,7 +142,7 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-// Create Stripe checkout session (requires auth)
+// Create Stripe checkout session
 app.post("/api/create-checkout-session", authenticate, async (req, res) => {
   const { items } = req.body;
 
